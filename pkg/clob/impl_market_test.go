@@ -121,7 +121,7 @@ func TestMarketMethods(t *testing.T) {
 
 	t.Run("OrderBook", func(t *testing.T) {
 		resp, err := client.OrderBook(ctx, &clobtypes.BookRequest{TokenID: "t1"})
-		if err != nil || resp.MarketID != "m1" {
+		if err != nil || resp.Market != "m1" {
 			t.Errorf("OrderBook failed: %v", err)
 		}
 	})

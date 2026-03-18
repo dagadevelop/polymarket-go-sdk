@@ -456,10 +456,16 @@ type (
 	}
 
 	OrderBook struct {
-		MarketID string       `json:"market_id"`
-		Bids     []PriceLevel `json:"bids"`
-		Asks     []PriceLevel `json:"asks"`
-		Hash     string       `json:"hash"`
+		Market         string       `json:"market"`
+		AssetID        string       `json:"asset_id"`
+		Timestamp      string       `json:"timestamp"`
+		Hash           string       `json:"hash"`
+		Bids           []PriceLevel `json:"bids"`
+		Asks           []PriceLevel `json:"asks"`
+		MinOrderSize   string       `json:"min_order_size"`
+		TickSize       string       `json:"tick_size"`
+		NegRisk        string       `json:"neg_risk"`
+		LastTradePrice string       `json:"last_trade_price"`
 	}
 
 	PriceLevel struct {
