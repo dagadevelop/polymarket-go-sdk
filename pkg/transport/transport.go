@@ -347,6 +347,11 @@ func (c *Client) doCall(ctx context.Context, method, path string, query url.Valu
 
 		// Unmarshal success response
 		if dest != nil {
+			trimmed := bytes.TrimSpace(respBytes)
+			if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+				// e.g. GET /balance-allowance/update returns 200 with an empty body
+				return nil
+			}
 			if err := json.Unmarshal(respBytes, dest); err != nil {
 				return fmt.Errorf("failed to unmarshal response: %w", err)
 			}
