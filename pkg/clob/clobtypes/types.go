@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // OrderType represents time-in-force / order type values.
@@ -475,20 +476,24 @@ type (
 		Size  string `json:"size"`
 	}
 
+	// Order is the CTF Exchange order for CLOB v2 (EIP-712).
+	// See: https://docs.polymarket.com/v2-migration
 	Order struct {
-		// Define order fields
 		Salt          types.U256    `json:"salt"`
 		Signer        types.Address `json:"signer"`
 		Maker         types.Address `json:"maker"`
-		Taker         types.Address `json:"taker"`
 		TokenID       types.U256    `json:"token_id"`
 		MakerAmount   types.Decimal `json:"maker_amount"`
 		TakerAmount   types.Decimal `json:"taker_amount"`
-		Expiration    types.U256    `json:"expiration"`
 		Side          string        `json:"side"` // BUY/SELL
-		FeeRateBps    types.Decimal `json:"fee_rate_bps"`
-		Nonce         types.U256    `json:"nonce"`
 		SignatureType *int          `json:"signature_type,omitempty"` // 0=EOA, 1=Proxy, 2=Safe
+		// Timestamp is Unix time in milliseconds; signed as uint256 (order uniqueness, not expiry).
+		Timestamp int64 `json:"-"`
+		// Metadata and Builder are EIP-712 bytes32 fields; zero for normal orders.
+		Metadata common.Hash `json:"-"`
+		Builder  common.Hash `json:"-"`
+		// NegRisk selects the neg-risk exchange verifying contract for EIP-712 when not using client cache; ignored when nil.
+		NegRisk *bool `json:"-"`
 	}
 
 	PriceHistoryPoint struct {

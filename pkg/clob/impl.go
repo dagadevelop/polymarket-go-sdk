@@ -15,6 +15,8 @@ import (
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/clob/ws"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/transport"
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // clientImpl implements the Client interface.
@@ -483,4 +485,15 @@ func mapError(err error) error {
 		return cloberrors.FromTypeErr(apiErr)
 	}
 	return err
+}
+
+func (c *clientImpl) builderV2Field() common.Hash {
+	if c == nil || c.builderCfg == nil {
+		return common.Hash{}
+	}
+	h, err := parseBuilderCodeString(c.builderCfg.Code)
+	if err != nil {
+		return common.Hash{}
+	}
+	return h
 }
