@@ -138,6 +138,9 @@ type (
 		Order     Order  `json:"order"`
 		Signature string `json:"signature"`
 		Owner     string `json:"owner"`
+		// FeeRateBps is sent as top-level fee_rate_bps in POST /order; not part of EIP-712. CLOB v2
+		// requires this field; leave empty to let the client fill from GET /fee-rate.
+		FeeRateBps string `json:"-"`
 
 		// Options used when submitting the order (not serialized directly).
 		OrderType OrderType `json:"-"`
