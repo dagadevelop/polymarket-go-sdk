@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/GoPolymarket/polymarket-go-sdk/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -632,6 +634,67 @@ type (
 		Type   string `json:"type"`
 	}
 )
+
+type balanceAllowanceWire struct {
+	Balance    interface{}       `json:"balance"`
+	Allowances map[string]string `json:"allowances"`
+	Allowance  string            `json:"allowance"`
+}
+
+func normalizeBalanceString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	switch t := v.(type) {
+	case string:
+		return strings.TrimSpace(t)
+	case json.Number:
+		return t.String()
+	case float64:
+		return strconv.FormatInt(int64(t), 10)
+	case int64:
+		return strconv.FormatInt(t, 10)
+	default:
+		return strings.TrimSpace(fmt.Sprint(t))
+	}
+}
+
+// UnmarshalJSON decodes CLOB /balance-allowance payloads where balance may be a JSON string
+// or number, and the body may be wrapped in {"data":{...}}.
+func (b *BalanceAllowanceResponse) UnmarshalJSON(data []byte) error {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil
+	}
+	var outer struct {
+		Data json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(trimmed, &outer); err == nil && len(bytes.TrimSpace(outer.Data)) > 0 {
+		var inner balanceAllowanceWire
+		if err := json.Unmarshal(outer.Data, &inner); err == nil {
+			b.Balance = normalizeBalanceString(inner.Balance)
+			b.Allowances = inner.Allowances
+			b.Allowance = inner.Allowance
+			if b.Allowances == nil {
+				b.Allowances = make(map[string]string)
+			}
+			return nil
+		}
+	}
+	dec := json.NewDecoder(bytes.NewReader(trimmed))
+	dec.UseNumber()
+	var wire balanceAllowanceWire
+	if err := dec.Decode(&wire); err != nil {
+		return err
+	}
+	b.Balance = normalizeBalanceString(wire.Balance)
+	b.Allowances = wire.Allowances
+	b.Allowance = wire.Allowance
+	if b.Allowances == nil {
+		b.Allowances = make(map[string]string)
+	}
+	return nil
+}
 
 // PricesHistoryResponse supports both legacy array responses and the current
 // object-wrapped form returned by the API (e.g. {"history":[...]}).
