@@ -167,17 +167,17 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 
 	ts := big.NewInt(order.Timestamp)
 	message := apitypes.TypedDataMessage{
-		"salt":            (*math.HexOrDecimal256)(order.Salt.Int),
-		"maker":           order.Maker.String(),
-		"signer":          signer.Address().String(),
-		"tokenId":         (*math.HexOrDecimal256)(order.TokenID.Int),
-		"makerAmount":     (*math.HexOrDecimal256)(order.MakerAmount.BigInt()),
-		"takerAmount":     (*math.HexOrDecimal256)(order.TakerAmount.BigInt()),
-		"side":            (*math.HexOrDecimal256)(big.NewInt(int64(sideInt))),
-		"signatureType":   (*math.HexOrDecimal256)(big.NewInt(int64(sigTypeVal))),
-		"timestamp":       (*math.HexOrDecimal256)(ts),
-		"metadata":        order.Metadata.Hex(),
-		"builder":         order.Builder.Hex(),
+		"salt":          (*math.HexOrDecimal256)(order.Salt.Int),
+		"maker":         order.Maker.String(),
+		"signer":        signer.Address().String(),
+		"tokenId":       (*math.HexOrDecimal256)(order.TokenID.Int),
+		"makerAmount":   (*math.HexOrDecimal256)(order.MakerAmount.BigInt()),
+		"takerAmount":   (*math.HexOrDecimal256)(order.TakerAmount.BigInt()),
+		"side":          (*math.HexOrDecimal256)(big.NewInt(int64(sideInt))),
+		"signatureType": (*math.HexOrDecimal256)(big.NewInt(int64(sigTypeVal))),
+		"timestamp":     (*math.HexOrDecimal256)(ts),
+		"metadata":      order.Metadata.Hex(),
+		"builder":       order.Builder.Hex(),
 	}
 
 	sig, err := signer.SignTypedData(domain, typesDef, message, "Order")
@@ -197,42 +197,8 @@ func signOrderWithCreds(signer auth.Signer, apiKey *auth.APIKey, order *clobtype
 	}, nil
 }
 
-// ensureSignedOrderFeeRateBps fills POST /order "fee_rate_bps" when unset. CLOB v2 rejects empty
-// or missing values; the signed EIP-712 order does not include fee.
-func (c *clientImpl) ensureSignedOrderFeeRateBps(ctx context.Context, signed *clobtypes.SignedOrder) {
-	if signed == nil {
-		return
-	}
-	if strings.TrimSpace(signed.FeeRateBps) != "" {
-		return
-	}
-	tid := ""
-	if signed.Order.TokenID.Int != nil {
-		tid = signed.Order.TokenID.Int.String()
-	}
-	if tid == "" {
-		signed.FeeRateBps = "0"
-		return
-	}
-	resp, err := c.FeeRate(ctx, &clobtypes.FeeRateRequest{TokenID: tid})
-	if err != nil {
-		signed.FeeRateBps = "0"
-		return
-	}
-	bps := resp.BaseFee
-	if bps == 0 && strings.TrimSpace(resp.FeeRate) != "" {
-		if n, perr := strconv.ParseInt(strings.TrimSpace(resp.FeeRate), 10, 64); perr == nil {
-			bps = n
-		}
-	}
-	signed.FeeRateBps = strconv.FormatInt(bps, 10)
-}
-
 func (c *clientImpl) PostOrder(ctx context.Context, req *clobtypes.SignedOrder) (clobtypes.OrderResponse, error) {
 	var resp clobtypes.OrderResponse
-	if req != nil {
-		c.ensureSignedOrderFeeRateBps(ctx, req)
-	}
 	payload, err := buildOrderPayload(req)
 	if err != nil {
 		return resp, err
@@ -245,11 +211,6 @@ func (c *clientImpl) PostOrders(ctx context.Context, req *clobtypes.SignedOrders
 	var resp clobtypes.PostOrdersResponse
 	if req != nil && len(req.Orders) > clobtypes.MaxPostOrdersBatchSize {
 		return resp, fmt.Errorf("batch size %d exceeds maximum of %d orders", len(req.Orders), clobtypes.MaxPostOrdersBatchSize)
-	}
-	if req != nil {
-		for i := range req.Orders {
-			c.ensureSignedOrderFeeRateBps(ctx, &req.Orders[i])
-		}
 	}
 	payload, err := buildOrdersPayload(req)
 	if err != nil {

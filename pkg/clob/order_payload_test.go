@@ -43,8 +43,8 @@ func TestBuildOrderPayloadCasingAndOptions(t *testing.T) {
 	if got := payload["orderType"]; got != clobtypes.OrderTypeGTC {
 		t.Fatalf("orderType mismatch: got %v", got)
 	}
-	if got := payload["fee_rate_bps"]; got != "0" {
-		t.Fatalf("fee_rate_bps: got %v, want 0 (default when unset)", got)
+	if _, ok := payload["fee_rate_bps"]; ok {
+		t.Fatalf("fee_rate_bps must not appear in POST /order body (CLOB v2)")
 	}
 
 	orderMap, ok := payload["order"].(map[string]interface{})

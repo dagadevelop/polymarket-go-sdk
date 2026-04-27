@@ -23,16 +23,10 @@ func buildOrderPayload(order *clobtypes.SignedOrder) (map[string]interface{}, er
 		return nil, err
 	}
 
-	feeBps := strings.TrimSpace(order.FeeRateBps)
-	if feeBps == "" {
-		feeBps = "0"
-	}
-
 	payload := map[string]interface{}{
-		"order":         orderMap,
-		"owner":         order.Owner,
-		"orderType":     orderType,
-		"fee_rate_bps":  feeBps,
+		"order":     orderMap,
+		"owner":     order.Owner,
+		"orderType": orderType,
 	}
 	if order.PostOnly != nil {
 		payload["postOnly"] = *order.PostOnly

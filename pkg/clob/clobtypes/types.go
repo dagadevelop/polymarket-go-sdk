@@ -138,8 +138,8 @@ type (
 		Order     Order  `json:"order"`
 		Signature string `json:"signature"`
 		Owner     string `json:"owner"`
-		// FeeRateBps is sent as top-level fee_rate_bps in POST /order; not part of EIP-712. CLOB v2
-		// requires this field; leave empty to let the client fill from GET /fee-rate.
+		// FeeRateBps is legacy; POST /order no longer includes top-level fee_rate_bps for CLOB v2.
+		// Kept for callers that still set it; it is ignored when building the wire payload.
 		FeeRateBps string `json:"-"`
 
 		// Options used when submitting the order (not serialized directly).
@@ -490,7 +490,7 @@ type (
 		TokenID       types.U256    `json:"token_id"`
 		MakerAmount   types.Decimal `json:"maker_amount"`
 		TakerAmount   types.Decimal `json:"taker_amount"`
-		Side          string        `json:"side"` // BUY/SELL
+		Side          string        `json:"side"`                     // BUY/SELL
 		SignatureType *int          `json:"signature_type,omitempty"` // 0=EOA, 1=Proxy, 2=Safe
 		// Timestamp is Unix time in milliseconds; signed as uint256 (order uniqueness, not expiry).
 		Timestamp int64 `json:"-"`
